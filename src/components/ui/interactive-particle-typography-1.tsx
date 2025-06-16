@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 
 const DEFAULT_TEXT = "21ST.DEV";
 const DEFAULT_FONT_FAMILY = "'Inter', sans-serif";
@@ -15,7 +15,20 @@ const SETTLE_ATTRACTION_MULTIPLIER = 0.15;
 const SETTLE_NOISE_MULTIPLIER = 0.7;
 
 // --- Physics Parameters Object (defaults) ---
-const initialPhysicsParams = {
+interface PhysicsParams {
+    PARTICLE_COUNT_TARGET: number;
+    PARTICLE_BASE_SIZE: number;
+    ATTRACTION_FORCE_BASE: number;
+    NOISE_STRENGTH_BASE: number;
+    FRICTION: number;
+    MOUSE_INTERACTION_RADIUS: number;
+    MOUSE_DISPERSE_STRENGTH: number;
+    TRAIL_ALPHA: number;
+    ATTRACTION_DISTANCE_CLAMP: number;
+    SETTLE_DISTANCE_THRESHOLD: number;
+}
+
+const initialPhysicsParams: PhysicsParams = {
     PARTICLE_COUNT_TARGET: 3333,
     PARTICLE_BASE_SIZE: 1.2,
     ATTRACTION_FORCE_BASE: 0.10,
@@ -48,13 +61,13 @@ class Particle {
     vy: number;
     targetX: number;
     targetY: number;
-    physicsParams: any;
+    physicsParams: PhysicsParams;
     baseSize: number;
     size: number;
     color: string;
     attractionOffset: number;
     noiseOffset: number;
-    constructor(targetX: number, targetY: number, canvasWidth: number, canvasHeight: number, physicsParams: any) {
+    constructor(targetX: number, targetY: number, canvasWidth: number, canvasHeight: number, physicsParams: PhysicsParams) {
         this.x = -targetX + .2 * (Math.random() - 0.5) * canvasWidth;
         this.y = (Math.random() ) * canvasHeight ;
         this.vx = (Math.random() - 0.5) * 6;
@@ -124,6 +137,20 @@ class Particle {
     }
 }
 
+interface WordPoint {
+    x: number;
+    y: number;
+    sourceCanvasWidth: number;
+    sourceCanvasHeight: number;
+}
+interface WordPointPlaceholder {
+    sourceCanvasWidth: number;
+    sourceCanvasHeight: number;
+    isEmptyPlaceholder: true;
+}
+type WordPointResult = WordPoint | WordPointPlaceholder;
+
+
 interface ParticleTypographyProps {
   text?: string;
   onReady?: () => void; // callback when animation loop first becomes active
@@ -132,13 +159,13 @@ interface ParticleTypographyProps {
 const ParticleTypography: React.FC<ParticleTypographyProps> = ({ text, onReady }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const particlesArrayRef = useRef<Particle[]>([]);
-    const wordTargetPointsRef = useRef<any[]>([]);
+    const wordTargetPointsRef = useRef<WordPointResult[]>([]);
     const animationFrameIdRef = useRef<number | null>(null);
     const physicsParamsRef = useRef({...initialPhysicsParams});
     const readyRef = useRef(false);
 
-    const getWordPoints = useCallback((word: string, mainCanvasWidth: number, mainCanvasHeight: number) => {
-        const points = [];
+    const getWordPoints = useCallback((word: string, mainCanvasWidth: number, mainCanvasHeight: number): WordPointResult[] => {
+        const points: WordPoint[] = [];
         if (!word || word.trim() === "" || mainCanvasWidth <= 0 || mainCanvasHeight <= 0) {
             console.warn("getWordPoints: Invalid word or canvas dimensions.");
             return [{ sourceCanvasWidth: mainCanvasWidth, sourceCanvasHeight: mainCanvasHeight, isEmptyPlaceholder: true }];
@@ -227,15 +254,13 @@ const ParticleTypography: React.FC<ParticleTypographyProps> = ({ text, onReady }
       }
       wordTargetPointsRef.current = newPoints;
       
-      const minViewportDim = Math.min(canvas.width, canvas.height);
-      
       physicsParamsRef.current = {...initialPhysicsParams};
 
       const particleCountTarget = initialPhysicsParams.PARTICLE_COUNT_TARGET;
 
-      const usablePoints = newPoints.filter((pt: any) => 'x' in pt && 'y' in pt) as any[];
+      const usablePoints = newPoints.filter((pt): pt is WordPoint => 'x' in pt);
       
-      const sampledPoints: any[] = [];
+      const sampledPoints: WordPoint[] = [];
       if (usablePoints.length > 0) {
         if (usablePoints.length <= particleCountTarget) {
             sampledPoints.push(...usablePoints);
@@ -306,21 +331,21 @@ const ParticleTypography: React.FC<ParticleTypographyProps> = ({ text, onReady }
           'y' in pt
         ) {
           // Create a new particle with the new target
-          p = new Particle((pt as any).x, (pt as any).y, canvas.width, canvas.height, physicsParamsRef.current);
+          p = new Particle(pt.x, pt.y, canvas.width, canvas.height, physicsParamsRef.current);
           // but give it the position and velocity of the nearest old particle
           p.x = prevP.x;
           p.y = prevP.y;
           p.vx = prevP.vx;
           p.vy = prevP.vy;
         } else if (typeof pt === 'object' && 'x' in pt && 'y' in pt) {
-          p = new Particle((pt as any).x, (pt as any).y, canvas.width, canvas.height, physicsParamsRef.current);
+          p = new Particle(pt.x, pt.y, canvas.width, canvas.height, physicsParamsRef.current);
         } else {
           p = new Particle(Math.random() * canvas.width, Math.random() * canvas.height, canvas.width, canvas.height, physicsParamsRef.current);
         }
         
         if (typeof pt === 'object' && 'x' in pt && 'y' in pt) {
-          p.targetX = (pt as any).x;
-          p.targetY = (pt as any).y;
+          p.targetX = pt.x;
+          p.targetY = pt.y;
         } else {
           p.targetX = Math.random() * canvas.width;
           p.targetY = Math.random() * canvas.height;
@@ -367,6 +392,7 @@ const ParticleTypography: React.FC<ParticleTypographyProps> = ({ text, onReady }
             document.body.style.padding = '';
             document.body.classList.remove('bg-black', 'text-gray-100');
         };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run only once on mount
 
     // This useEffect will handle text changes
