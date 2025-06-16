@@ -198,7 +198,7 @@ const ParticleTypography: React.FC<ParticleTypographyProps> = ({ text, onReady }
         tempCtx.fillStyle = 'white';
         tempCtx.textAlign = 'center';
         tempCtx.textBaseline = 'middle';
-        tempCtx.fillText(normalizedWord, tempCanvas.width / 2, tempCanvas.height / 5);
+        tempCtx.fillText(normalizedWord, tempCanvas.width / 2, tempCanvas.height / 6);
 
         const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
         const data = imageData.data;
