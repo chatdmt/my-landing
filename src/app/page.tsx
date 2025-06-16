@@ -30,7 +30,7 @@ export default function Home() {
         <ParticleTypography text={animationText} onReady={handleAnimationReady} />
       </div>
       {showForm && (
-        <div className="relative z-10 w-full flex flex-col items-center justify-center">
+        <div className="relative z-10 w-full flex flex-col items-center justify-center mt-24">
           <AnimatedMultistepForm onComplete={handleFormComplete} allowFinalExit={allowFinalExit} />
         </div>
       )}
