@@ -29,7 +29,7 @@ interface PhysicsParams {
 }
 
 const initialPhysicsParams: PhysicsParams = {
-    PARTICLE_COUNT_TARGET: 3333,
+    PARTICLE_COUNT_TARGET: 1000,
     PARTICLE_BASE_SIZE: 1.2,
     ATTRACTION_FORCE_BASE: 0.10,
     NOISE_STRENGTH_BASE: 0.1,
