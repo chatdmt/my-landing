@@ -25,12 +25,12 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen justify-center items-center relative">
+    <div className="flex flex-col w-full h-screen justify-start items-center relative pt-20">
       <div className="absolute inset-0 z-0">
         <ParticleTypography text={animationText} onReady={handleAnimationReady} />
       </div>
       {showForm && (
-        <div className="relative z-10 w-full flex flex-col items-center justify-center mt-32 md:mt-56">
+        <div className="relative z-10 w-full flex flex-col items-center justify-center">
           <AnimatedMultistepForm onComplete={handleFormComplete} allowFinalExit={allowFinalExit} />
         </div>
       )}
